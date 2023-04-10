@@ -11,7 +11,7 @@ def generate_probability_range(symbols):
     low = Decimal(0)
     for symbol, count in symbol_count.items():
         prob = Decimal(count) / Decimal(total_count)
-        high = low + pro b
+        high = low + prob
         prob_range[symbol] = (low, high)
         #print(symbol,prob_range[symbol])
         low = high
