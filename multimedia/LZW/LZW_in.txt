@@ -1,0 +1,60 @@
+def compress_file(uncompressed):
+    dictionary_size = 256
+    dictionary = {chr(i): i for i in range(dictionary_size)}
+
+    result = []
+    buffer = ""
+    for char in uncompressed:
+        new_string = buffer + char
+        if new_string in dictionary:
+            buffer = new_string
+        else:
+            result.append(dictionary[buffer])
+            dictionary[new_string] = dictionary_size
+            dictionary_size += 1
+            buffer = char
+
+    if buffer:
+        result.append(dictionary[buffer])
+
+    return result
+
+def decompress_file(compressed):
+    dictionary_size = 256
+    dictionary = {i: chr(i) for i in range(dictionary_size)}
+
+    buffer = chr(compressed[0])
+    result = [buffer]
+    for code in compressed[1:]:
+        if code in dictionary:
+            entry = dictionary[code]
+        elif code == dictionary_size:
+            entry = buffer + buffer[0]
+        else:
+            raise ValueError("Invalid compressed code")
+
+        result.append(entry)
+
+        dictionary[dictionary_size] = buffer + entry[0]
+        dictionary_size += 1
+
+        buffer = entry
+    return result
+    
+# Open file for reading
+with open('LZW_in.txt', 'r') as f:
+    data = f.read()
+
+# Encode the data
+encoded_data = compress_file(data)
+
+# Write the encoded data to a file
+with open('LZW_encoded.bin', "w") as output_file:
+    output_file.write(str(encoded_data))
+
+# Decode the data
+decoded_data = decompress_file((encoded_data))
+
+# Write the decoded data to a file
+with open("LZW_out.txt", "w") as output_file:
+        output_file.write("".join(decoded_data))
