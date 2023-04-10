@@ -49,7 +49,7 @@ with open('LZW_in.txt', 'r') as f:
 encoded_data = compress_file(data)
 
 # Write the encoded data to a file
-with open('LZW_encoded.bin', "w") as output_file:
+with open('LZW_encoded.txt', "w") as output_file:
     output_file.write(str(encoded_data))
 
 # Decode the data
