@@ -1,77 +1,69 @@
-import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+import cv2
 from scipy.fftpack import dct, idct
-from PIL import Image
-import os
 
-def compress(image_path, output_path,bit):
-    img = cv2.imread(image_path,0)
-    img_arr = np.array(img)
+# Load the image and convert to grayscale
+image = cv2.imread('image.jpg', 0)
 
+# Convert the image to a NumPy array
+image_array = np.array(image)
 
-    height, width = img_arr.shape
-    h = height
-    w = width
-    height = height-(height%8)
-    width = width-(width%8)
-    
-    
-    img = img.resize((height, width))
-  
+# Pad the image to ensure its dimensions are divisible by 8
+h, w = image_array.shape
+H = int(np.ceil(h / 8) * 8)
+W = int(np.ceil(w / 8) * 8)
+padded_image = np.zeros((H, W))
+padded_image[:h, :w] = image_array
 
-    compressed = np.zeros_like(img_arr)
-    for i in range(0, height, 8):
-        for j in range(0, width, 8):
-    
-            block = img_arr[i:i+8, j:j+8]
-            dct_block = dct(dct(block.T, norm='ortho').T, norm='ortho').flatten()
-            sorted_coeffs = np.argsort(np.abs(dct_block))
-            
-            
-            
-            for mm in range(bit,64):
-                    dct_block[mm] = 0
-            compressed[i:i+8, j:j+8] = idct(idct(dct_block.reshape((8,8)).T, norm='ortho').T, norm='ortho')
+# Split the image into 8x8 blocks
+blocks = padded_image.reshape(H // 8, 8, -1, 8).swapaxes(1, 2)
 
-    # Save the compressed image
-    compressed_img = Image.fromarray(compressed)
-    compressed_img = compressed_img.resize((w,h))
-    compressed_img.save(output_path)
-    
+# Compute the 2D DCT for each block
+dct_blocks = np.zeros_like(blocks)
+for i in range(blocks.shape[0]):
+    for j in range(blocks.shape[2]):
+        dct_blocks[i, :, j, :] = dct(dct(blocks[i, :, j, :].T, norm='ortho').T, norm='ortho')
 
-img_name = 'image.jpg'
+# Flatten the DCT coefficients for each block into a 1D array
+dct_coeffs = dct_blocks.reshape(-1, 64)
 
-compress(img_name, 'output1.jpg', 1)
-compress(img_name, 'output2.jpg', 2)
-compress(img_name, 'output3.jpg', 5)
+# Quantize the DCT coefficients using a standard JPEG quantization table
+quant_table = np.array([[16, 11, 10, 16, 24, 40, 51, 61],
+                        [12, 12, 14, 19, 26, 58, 60, 55],
+                        [14, 13, 16, 24, 40, 57, 69, 56],
+                        [14, 17, 22, 29, 51, 87, 80, 62],
+                        [18, 22, 37, 56, 68, 109,103 ,77],
+                        [24 ,35 ,55 ,64 ,81 ,104 ,113 ,92],
+                        [49 ,64 ,78 ,87 ,103 ,121 ,120 ,101],
+                        [72 ,92 ,95 ,98 ,112 ,100 ,103 ,99]])
+quant_coeffs = np.round(dct_coeffs / quant_table.reshape(-1))
 
-img = cv2.imread(img_name,0)
-com_img1 =  cv2.imread('output1.jpg',0)
-com_img2 =  cv2.imread('output2.jpg',0)
-com_img3 =  cv2.imread('output3.jpg',0)
+# Convert the quantized DCT coefficients back into blocks
+quant_blocks = quant_coeffs.reshape(blocks.shape)
 
-plt.figure(figsize=(20,10))
-plt.subplot(2,2,1)
-plt.imshow(img,cmap = 'gray')
-plt.title("Original")
-plt.subplot(2,2,2)
-plt.imshow(com_img1,cmap = 'gray')
-plt.title("Compresed 1 bit")
-plt.subplot(2,2,3)
-plt.imshow(com_img2,cmap = 'gray')
-plt.title("Compresed 2 bit")
-plt.subplot(2,2,4)
-plt.imshow(com_img3,cmap = 'gray')
-plt.title("Compresed 5 bit")
+# Save the quantized DCT coefficients to a file
+np.save('dct_coeffs.npy', quant_coeffs)
 
-plt.show()
+# Load the quantized DCT coefficients from the file
+quant_coeffs = np.load('dct_coeffs.npy')
 
-cmp1 = os.path.getsize("output1.jpg") / 1024
-cmp2 = os.path.getsize("output2.jpg") / 1024
-cmp5 = os.path.getsize("output3.jpg") / 1024
-original = os.path.getsize("image.jpg") / 1024
+# Dequantize the DCT coefficients
+dct_coeffs = quant_coeffs * quant_table.reshape(-1)
 
-print(f'Compression ratio 1 dc bit: {original/cmp1:.2f}')
-print(f'Compression ratio 2 dc bit: {original/cmp2:.2f}')
-print(f'Compression ratio 2 dc bit: {original/cmp5:.2f}')
+# Convert the DCT coefficients back into blocks
+dct_blocks = dct_coeffs.reshape(blocks.shape)
+
+# Compute the inverse 2D DCT for each block
+idct_blocks = np.zeros_like(dct_blocks)
+for i in range(dct_blocks.shape[0]):
+    for j in range(dct_blocks.shape[2]):
+        idct_blocks[i,:,j,:] = idct(idct(dct_blocks[i,:,j,:].T,norm='ortho').T,norm='ortho')
+
+# Combine the blocks back into an image
+reconstructed_image = idct_blocks.swapaxes(1,2).reshape(H,W)
+
+# Crop the image to its original dimensions
+reconstructed_image = reconstructed_image[:h,:w]
+
+# Save the reconstructed image
+cv2.imwrite('reconstructed_image.jpg', reconstructed_image)

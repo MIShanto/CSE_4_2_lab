@@ -53,7 +53,11 @@ with open('LZW_encoded.txt', "w") as output_file:
     output_file.write(str(encoded_data))
 
 # Decode the data
-decoded_data = decompress_file((encoded_data))
+with open('LZW_encoded.txt', 'r') as f:
+        data = f.read()
+compressed_data = eval(data)  # Convert the string representation to a list
+
+decoded_data = decompress_file((compressed_data))
 
 # Write the decoded data to a file
 with open("LZW_out.txt", "w") as output_file:

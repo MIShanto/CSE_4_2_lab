@@ -30,7 +30,6 @@ def rle_decode(data):
     count = ''
     digitOccured = False
     for char in data:
-        print(char)
         if char == chr(123):
             # Skip the escape character
             continue
@@ -57,7 +56,10 @@ with open('RLE_out.txt', 'w') as f:
     f.write(encoded_data)
 
 # Decode the data
-decoded_data = rle_decode(encoded_data)
+with open('RLE_out.txt', 'r') as f:
+        data = f.read()
+
+decoded_data = rle_decode(data)
 
 # Write the decoded data to a file
 with open('RLE_decoded.txt', 'w') as f:

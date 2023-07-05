@@ -1,60 +1,53 @@
 from decimal import Decimal, getcontext
-from collections import Counter
+from collections import defaultdict
 
-# Set decimal precision
-getcontext().prec = 30
+getcontext().prec = 10
 
-def generate_probability_range(symbols):
-    total_count = len(symbols)
-    symbol_count = Counter(symbols)
-    prob_range = {}
-    low = Decimal(0)
-    for symbol, count in symbol_count.items():
-        prob = Decimal(count) / Decimal(total_count)
-        high = low + prob
-        prob_range[symbol] = (low, high)
-        #print(symbol,prob_range[symbol])
-        low = high
-    return prob_range
+probability = {}
+range_map = {}
 
-def encode(symbols, prob_range):
-    low = Decimal(0)
-    high = Decimal(1)
-    for symbol in symbols:
-        symbol_low, symbol_high = prob_range[symbol]
-        range_width = high - low
-        high = low + range_width * symbol_high
-        low = low + range_width * symbol_low
-        print(symbol, low, high)
-    return (low, high)
+def generate_probabilities(message):
+    char_counts = defaultdict(int)
+    for ch in message:
+        char_counts[ch] += 1
 
-def decode(encoded_message, prob_range, message_length):
-    low, high = encoded_message
-    message = ""
-    print(prob_range.items())
-    for i in range(message_length):
-        for symbol, symbol_range in prob_range.items():
-            symbol_low, symbol_high = symbol_range
-            symbol_width = symbol_high - symbol_low
-            if low >= symbol_low and high <= symbol_high:
-                message += symbol
-                high = (high - symbol_low) / symbol_width
-                low = (low - symbol_low) / symbol_width
-                break
-    return message
+    pre = Decimal(0)
+    print("Symbol\t\tProbability\tRange")
+    for ch, count in char_counts.items():
+        prob = Decimal(count) / Decimal(len(message))
+        probability[ch] = prob
+        range_map[ch] = (pre, pre + prob)
+        print(f"{ch}\t\t{prob}\t\t[{pre}\t{pre+prob})")
+        pre += prob
+    #return probability, range_map
 
-# Read input from file
-input_string = "Hello! 1243!"
+def arithmetic_encoding(message):
+    low, high, range_ = Decimal(0), Decimal(1), Decimal(1)
+    for ch in message:
+        high = low + range_ * range_map[ch][1]
+        low = low + range_ * range_map[ch][0]
+        range_ = high - low
+    return (low + high) / Decimal(2)
 
-# Generate probability range
-prob_range = generate_probability_range(input_string)
+def arithmetic_decoding(value):
+    decoded_str = ""
+    while True:
+        for ch, (low, high) in range_map.items():
+            if low <= value < high:
+                decoded_str += ch
+                rang = high - low
+                value = (value - low) / rang
+                if ch == "~":
+                    return decoded_str
 
-# Encode input string
-encoded_message = encode(input_string, prob_range)
+if __name__ == "__main__":
+    with open("input.txt") as f:
+        s = f.read()
 
-# Decode encoded message
-decoded_message = decode(encoded_message, prob_range, len(input_string))
+    generate_probabilities(s)
+    
+    encode = arithmetic_encoding(s)
+    print(f"\nEncoded Tag: {encode}")
 
-print(str(encoded_message))
-
-print(decoded_message)
+    decode = arithmetic_decoding(encode)
+    print(f"\nDecoded String: {decode}")
