@@ -1,0 +1,48 @@
+First I make a project using composer create-project laravel/laravel project_name
+
+Then I change the .env file to point to the correct database
+
+Then generate the initial tables using php artisan migrate
+Then create a migration using php artisan make:migration migration_name
+
+Then create some tables inside the migration:
+$table->string('name')
+Then migrate again using php artisan migrate
+
+Then we need a model using php artisan make:model model_name
+Now to manage product table, we make a protected $fillable array, containing columns names that are fillable
+
+Then make a controller using php artisan make:controller controller_name
+
+Then we need a route, route::request type then url endpoint then in an array, controller::class and method name, and route name
+
+Then in the controller, simply return the view using the view name.
+
+Now, when we want to make a form to submit, in the form action, we have to put in {{ route(route_name) }}. We also need csrf and method tags
+
+Now, to actually put in the data, we need to validate it first.
+Then Product::create($data) to create it.
+
+For  showing errors: @if $errors ->any() @foreach $errors->all() as $error
+
+Now to print data, we need to get all data from products, then return the view with what name to store data in and what variable is in it in an array
+
+Now to edit, we need another route with which can take the product id. So we make the route has a variable named prodcut, and on the html, when sending the route, we also pass in the $product as the name prodcut in an array. Now, we can show the edit page using get, but to actualy edit it, we need another route with the put method.
+
+Now, this route will be the same but the controller will get 2 parameters, one which is for the product and another for the information we got from the request
+
+So we simply validate it like we did when we stored, except instead of creating a static instance of Product, we take the previous instance and call update on it with success and product created successfully.
+
+Now, to show the success message, we take session()->has('success') and print the session('success)
+
+oh hea, onno manusher project use korete chaile php artisan key:generate kora lage.
+
+Now for seeing, first e toh seeder class generate kora lage by calling make:seeder name
+taarpor seeder file ta ke edit kora lage. To do that, first we import illuminate/support/str class for some random string stuff and also Nette\Utils\Random for random int stuff. Of course we need to import the model. THen make a loop. Inside the loop, use the static create method of the model, then put in the fields to seed and what to seed with in an array.
+
+Also note that where can be used in many ways, where get for getting, where update for updating etc.
+
+Some functions:
+Model::all() gives all
+Model::find() gives by id
+Model::where() has many uses, ->get() for getting, ->update() for updating
