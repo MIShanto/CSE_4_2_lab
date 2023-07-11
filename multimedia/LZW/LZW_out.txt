@@ -1,4 +1,4 @@
-def compress_file(uncompressed):
+,def compress_file(uncompressed):
     dictionary_size = 256
     dictionary = {chr(i): i for i in range(dictionary_size)}
 

@@ -3,7 +3,7 @@ import cv2
 from scipy.fftpack import dct, idct
 
 # Load the image and convert to grayscale
-image = cv2.imread('image.jpg', 0)
+image = cv2.imread('input.jpg', 0)
 
 # Convert the image to a NumPy array
 image_array = np.array(image)

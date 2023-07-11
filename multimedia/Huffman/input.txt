@@ -1,0 +1,86 @@
+from collections import defaultdict
+
+class Node:
+    def __init__(self, char, freq):
+        self.char = char
+        self.freq = freq
+        self.left = self.right = None
+
+def build_tree(nodes):
+    while len(nodes) > 1:
+        nodes.sort(key=lambda x: x.freq)
+        left, right = nodes[:2]
+        root = Node(None, left.freq + right.freq)
+        root.left, root.right = left, right
+        nodes = nodes[2:] + [root]
+    return nodes[0]
+
+def generate_codes(root, current_code, codes):
+    if root.char:
+        codes[root.char] = current_code
+    else:
+        generate_codes(root.left, current_code + "0", codes)
+        generate_codes(root.right, current_code + "1", codes)
+
+def encode(string, codes):
+    return ''.join(codes[char] for char in string)
+
+def decode(encoded, codes):
+    reverse_codes = {code: char for char, code in codes.items()}
+    decoded = ""
+    current_code = ""
+    for bit in encoded:
+        current_code += bit
+        if current_code in reverse_codes:
+            decoded += reverse_codes[current_code]
+            current_code = ""
+    return decoded
+
+# Read input string from text file
+with open('input.txt', 'r') as f:
+    string = f.read()
+
+nodes = [Node(char, string.count(char)) for char in set(string)]
+root = build_tree(nodes)
+codes = {}
+generate_codes(root, "", codes)
+
+# Save encoded string to text file
+encoded = encode(string, codes)
+with open('encoded.txt', 'w') as f:
+    f.write(encoded)
+
+# Save codes to text file using vertical bar as delimiter and escape sequences to represent characters
+with open('codes.txt', 'w') as f:
+    for char, code in codes.items():
+        if char == ' ':
+            f.write(f"\\s|{code}\n")
+        else:
+            f.write(f"{char.encode('unicode_escape').decode()}|{code}\n")
+
+# Read encoded string from text file
+with open('encoded.txt', 'r') as f:
+    encoded = f.read()
+
+# Read codes from text file using vertical bar as delimiter and escape sequences to represent characters
+codes = {}
+with open('codes.txt', 'r') as f:
+    for line in f:
+        char, code = line.strip().split('|')
+        if char == '\\s':
+            codes[' '] = code
+        else:
+            codes[char.encode().decode('unicode_escape')] = code
+
+decoded = decode(encoded, codes)
+
+# Save decoded string to text file
+with open('decoded.txt', 'w') as f:
+    f.write(decoded)
+
+# Print results
+print("Huffman codes:")
+for char in codes:
+    print(f"{char}: {codes[char]}")
+print(f"Encoded string: {encoded}")
+print(f"Decoded string: {decoded}")

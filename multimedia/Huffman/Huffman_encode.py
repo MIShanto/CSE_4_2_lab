@@ -1,3 +1,5 @@
+import json
+
 class Node:
     def __init__(self, char, freq):
         self.char = char
@@ -23,25 +25,26 @@ def generate_codes(root, current_code, codes):
 def encode(string, codes):
     return ''.join(codes[char] for char in string)
 
-def decode(encoded, root):
-    decoded = ""
-    current_node = root
-    for bit in encoded:
-        current_node = current_node.left if bit == "0" else current_node.right
-        if current_node.char:
-            decoded += current_node.char
-            current_node = root
-    return decoded
+# Read input string from text file
+with open('input.txt', 'r') as f:
+    string = f.read()
 
-string = "This is a test \n\n\n\n 4545 ; = $ \n\n\n string"
 nodes = [Node(char, string.count(char)) for char in set(string)]
 root = build_tree(nodes)
 codes = {}
 generate_codes(root, "", codes)
+
+# Save encoded string to text file
+encoded = encode(string, codes)
+with open('encoded.txt', 'w') as f:
+    f.write(encoded)
+
+# Save codes to text file as a JSON object
+with open('codes.json', 'w') as f:
+    json.dump(codes, f)
+
+# Print results
 print("Huffman codes:")
 for char in codes:
     print(f"{char}: {codes[char]}")
-encoded = encode(string, codes)
 print(f"Encoded string: {encoded}")
-decoded = decode(encoded, root)
-print(f"Decoded string: {decoded}")
